@@ -19,8 +19,8 @@ python-versions = "*"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
-content-hash = "18ccf359e0191eb649b94cd8979f8cee4fcf29b5bdccc78245145b66eb2bb083"
+python-versions = "^3.8"
+content-hash = "284231a85008351b6b7dac4dd7c501764af00c55f692d829132ff60a9a592e49"
 
 [metadata.files]
 psutil = [

@@ -16,6 +16,8 @@ Potentially Interested in these numerical values:
 cpu_times -> kernel/user
 """
 
+osc_client = udp_client.SimpleUDPClient("172.28.208.1", 57120)
+
 def valid_process(p_info: Dict) -> bool:
     return p_info["username"] not in PROCESS_IGNORE_LIST and p_info["pid"] != CURRENT_PID
 
@@ -33,7 +35,7 @@ def poll_processes(poll_rate: int=1000):
                 else:
                     cleaned_processes[p_info['name']] = {"cpu"}
                 
-
+        osc_client.send_message("/test", "hello")
         sleep(poll_rate/1000)
         
 
