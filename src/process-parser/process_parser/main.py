@@ -63,11 +63,15 @@ def poll_processes(poll_rate: int=50):
             for p in processes:
                 try:
                     p_info = p.as_dict(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "num_fds", "username", "pid", "name"])
+                    if p_info['cpu_times'] is None:
+                        raise AttributeError
                 except psutil.NoSuchProcess as e:
                     print(f"Can't find {e.name}. Skipping.")
                     continue
+                except AttributeError as e:
+                    print("Skipping process as attributes empty.")
 
-                if user_process(p_info):
+                if user_process(p_info):                    
                     if p_info['name'] in cleaned_processes:
                         cleaned_processes[p_info['name']]['cpu_percent'] += p_info['cpu_percent']
                         cleaned_processes[p_info['name']]['cpu_times']['user'] += p_info['cpu_times'][0]
@@ -86,6 +90,7 @@ def poll_processes(poll_rate: int=50):
                         user_cpu_pct += p_info['cpu_percent']
 
                     else:
+                        
                         cleaned_processes[p_info['name']] = {'cpu_percent': p_info['cpu_percent'], 
                                                             'cpu_times': {'user': p_info['cpu_times'][0], 'kernel': p_info['cpu_times'][1]}, 
                                                             'memory_percent': p_info['memory_percent'], 'nice': p_info['nice'], 
