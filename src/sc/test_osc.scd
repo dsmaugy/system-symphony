@@ -172,7 +172,7 @@ var stop_osc_func;
 	}, '/top_mem_usage');
 
 	stop_osc_func = OSCFunc({|msg, time, addr, recvPort|
-		[msg, time, addr, recvPort].postln;
+	// [msg, time, addr, recvPort].postln;
 		all_cont_synths.do({|item, i|
 			item.set(\amp, 0);
 		});
