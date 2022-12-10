@@ -6,6 +6,8 @@ from pythonosc import udp_client
 
 import psutil
 import click
+import importlib.resources
+import subprocess
 
 PROCESS_IGNORE_LIST = {"root"}
 CURRENT_PID = os.getpid()
@@ -30,7 +32,7 @@ discrete vars:
 
 
 
-osc_client = udp_client.SimpleUDPClient("127.0.0.1", 57120)
+osc_client = udp_client.SimpleUDPClient("172.28.208.1", 57120)
 
 def user_process(p_info: Dict) -> bool:
     return p_info["username"] not in PROCESS_IGNORE_LIST and p_info["pid"] != CURRENT_PID
@@ -40,6 +42,10 @@ def quantify_string(s: str, thresh: int) -> int:
     while full_int-thresh > thresh:
         full_int = full_int // 10
     return full_int
+
+def init_sc():
+    with importlib.resources.path("process_parser.supercollider", "process_synths.scd") as sc_file:
+        subprocess.run(["sclang", sc_file])
 
 
 def poll_processes(poll_rate: int=50):
@@ -146,8 +152,13 @@ def poll_processes(poll_rate: int=50):
 
 @click.command()
 @click.option("--poll-rate", default=50, help="How fast to poll processes in ms")
-def main(poll_rate):
+@click.option("--start-sc", is_flag=True, show_default=True, default=True, help="Starts the supercollider script for you.")
+def main(poll_rate, start_sc):
     """Explore the sonic world of your computer. Associated supercollider file must be running."""
+
+    if start_sc:
+        init_sc()
+
     poll_processes(poll_rate=poll_rate)
 
 if __name__ == "__main__":
