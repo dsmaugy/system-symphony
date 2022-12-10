@@ -135,15 +135,17 @@ s.waitForBoot({
 )
 
 (
-var system_synth, mem_synth, cpu_synth;
+var system_synth, mem_synth, cpu_synth, r2d2_synth;
 var system_osc_func, cpu_osc_func, new_proc_osc_func, mem_osc_func;
 var all_cont_synths;
 var stop_osc_func;
+
 	// OSCFunc Definitions - here is where the controls happen
 	system_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 	cpu_synth = Synth(\strings, [\amp, 0]);
 	mem_synth = Synth(\drone, [\freq, 800, \amp, 0]);
-	all_cont_synths = [system_synth, mem_synth, cpu_synth];
+r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
+	all_cont_synths = [system_synth, mem_synth, cpu_synth, r2d2_synth];
 
 
 	system_osc_func = OSCFunc({ |msg, time, addr, recvPort|
@@ -152,7 +154,8 @@ var stop_osc_func;
 		var system_synth_freq_cur = system_synth.get(\freq);
 		[msg, time, addr, recvPort].postln;
 
-	system_synth.set(\freq, system_synth_freq_new, \upper_harm, harm_new, \amp, 0.8);
+	system_synth.set(\freq, system_synth_freq_new, \amp, 0.1);
+	r2d2_synth.set(\upper_harm, harm_new, \amp, 0.1);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
