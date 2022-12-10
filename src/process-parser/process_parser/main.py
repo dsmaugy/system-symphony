@@ -70,6 +70,7 @@ def poll_processes(poll_rate: int=50):
                     continue
                 except AttributeError as e:
                     print("Skipping process as attributes empty.")
+                    continue
 
                 if user_process(p_info):                    
                     if p_info['name'] in cleaned_processes:
