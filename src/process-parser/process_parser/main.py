@@ -79,11 +79,11 @@ def poll_processes(poll_rate: int=50):
                         cleaned_processes[p_info['name']]['cpu_times']['kernel'] += p_info['cpu_times'][1]
                         cleaned_processes[p_info['name']]['memory_percent'] += p_info['memory_percent']
                         cleaned_processes[p_info['name']]['nice'] = max(p_info['nice'], cleaned_processes[p_info['name']]['nice'])
-                        if p_info['num_fds']:
-                            if cleaned_processes[p_info['name']]['num_fds']: 
-                                cleaned_processes[p_info['name']]['num_fds'] += p_info['num_fds']
-                            else:
-                                cleaned_processes[p_info['name']]['num_fds'] = p_info['num_fds']
+                        # if p_info['num_fds']:
+                        #     if cleaned_processes[p_info['name']]['num_fds']: 
+                        #         cleaned_processes[p_info['name']]['num_fds'] += p_info['num_fds']
+                        #     else:
+                        #         cleaned_processes[p_info['name']]['num_fds'] = p_info['num_fds']
 
                         cleaned_processes[p_info['name']]['num_threads'] += p_info['num_threads']
                         cleaned_processes[p_info['name']]['total_num_procs'] += 1
@@ -95,7 +95,7 @@ def poll_processes(poll_rate: int=50):
                         cleaned_processes[p_info['name']] = {'cpu_percent': p_info['cpu_percent'], 
                                                             'cpu_times': {'user': p_info['cpu_times'][0], 'kernel': p_info['cpu_times'][1]}, 
                                                             'memory_percent': p_info['memory_percent'], 'nice': p_info['nice'], 
-                                                            'num_fds': p_info['num_fds'], 'num_threads': p_info['num_threads'], 
+                                                            'num_threads': p_info['num_threads'], 
                                                             'total_num_procs': 0}
                         unique_user_proc_names_current.add(p_info['name'])
 
