@@ -152,7 +152,7 @@ var stop_osc_func;
 		var system_synth_freq_cur = system_synth.get(\freq);
 		[msg, time, addr, recvPort].postln;
 
-	system_synth.set(\freq, system_synth_freq_new, \amp, 0.8);
+	system_synth.set(\freq, system_synth_freq_new, \upper_harm, harm_new, \amp, 0.8);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
