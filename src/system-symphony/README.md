@@ -1,17 +1,19 @@
 # system-symphony
-explore the sonic world of your computer
+
+Explore the sonic world of your computer.
 
 ## Installation
 ### Preqrequisites
 1. Install [Supercollider](https://supercollider.github.io/downloads) on your current platform.
 2. Make sure `sclang` is added to system PATH.
-3. Install `system-symphony` locally or through pypi as directed below.
+    - **Mac**: `sclang` may be stored at `PATH="/Applications/SuperCollider.app/Contents/MacOS/:$PATH"` or `PATH="/Applications/SuperCollider/SuperCollider.app/Contents/MacOS/:$PATH"`
+    - **Windows**: `sclang` is likely stored at: `C:\Program Files\SuperCollider-<version>`
 ### Installing Locally
-1. Run `pip install .` in this directory
+1. Run `pip install .` in `src/system-symphony` directory
 
 
 ### Installing through pypi
-TBD
+1. Run `pip install system-symphony`
 
 ## Usage
 
@@ -27,3 +29,5 @@ Options:
   --help               Show this message and exit.
 
 ```
+
+
