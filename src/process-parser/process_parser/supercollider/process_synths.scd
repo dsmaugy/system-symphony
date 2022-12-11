@@ -158,10 +158,10 @@ s.waitForBoot({
 		var system_synth_freq_new = msg[1];
 		var harm_new = msg[2];
 		var system_synth_freq_cur = system_synth.get(\freq);
-		[msg, time, addr, recvPort].postln;
+		// [msg, time, addr, recvPort].postln;
 
-	system_synth.set(\freq, system_synth_freq_new, \amp, 0.5);
-		grain_synth.set(\rate, msg[2]*10, \pos, msg[1], \amp, 0.2);
+	system_synth.set(\freq, system_synth_freq_new, \amp, 0.6);
+		grain_synth.set(\rate, msg[2]/20, \pos, msg[1], \amp, 0.3);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
@@ -176,8 +176,8 @@ s.waitForBoot({
 	}, '/new_proc');
 
 	mem_osc_func = OSCFunc({ |msg, time, addr, recvPort|
-		// [msg, time, addr, recvPort].postln;
-		mem_synth.set(\freq, msg[1]*15, \amp, 0.5);  // 700 + ((msg[1]/100)*250).
+		[msg, time, addr, recvPort].postln;
+		mem_synth.set(\freq, msg[1]*20, \amp, 0.7);  // 700 + ((msg[1]/100)*250).
 	}, '/mem_usage');
 
 	stop_osc_func = OSCFunc({|msg, time, addr, recvPort|
