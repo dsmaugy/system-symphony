@@ -12,26 +12,6 @@ import subprocess
 PROCESS_IGNORE_LIST = {"root"}
 CURRENT_PID = os.getpid()
 
-"""
-Potentially Interested in these numerical values:
-'cpu_percent', 'cpu_times', 'memory_percent', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads'
-
-cpu_times -> kernel/user
-
-cpu usage: 0 - 200?
-mem: 0 - 100 
-
-continuous vars:
- - mem percent for top mem usage proc
- - num system procs
- - num user procs
-
-discrete vars:
- - cpu percent for top cpu usage proc
-"""
-
-
-
 osc_client = udp_client.SimpleUDPClient("127.0.0.1", 57120)
 
 def user_process(p_info: Dict) -> bool:
@@ -44,7 +24,7 @@ def quantify_string(s: str, thresh: int) -> int:
     return full_int
 
 def init_sc():
-    with importlib.resources.path("process_parser.supercollider", "process_synths.scd") as sc_file:
+    with importlib.resources.path("supercollider", "process_synths.scd") as sc_file:
         subprocess.Popen(["sclang", sc_file])
 
 def poll_processes(poll_rate: int=50):
@@ -56,7 +36,6 @@ def poll_processes(poll_rate: int=50):
     try:
         while True:
             processes = list(psutil.process_iter(attrs=["cpu_percent", "cpu_times", "memory_percent", "username", "pid", "name"]))
-            print(f"len: {len(processes)}")
             num_active_system_procs = 0
             num_active_user_procs = 0
 
@@ -100,13 +79,13 @@ def poll_processes(poll_rate: int=50):
 
             # TODO: if we're only keeping track of top proc then we should do it manually instead of sorting
             procs_by_count = sorted(cleaned_processes.items(), key=lambda x: x[1]['total_num_procs'], reverse=True)
-            print(f"Top Proc by count: {procs_by_count[0][0]} with {procs_by_count[0][1]['total_num_procs']} procs")
-
-            procs_by_cpu = sorted(cleaned_processes.items(), key=lambda x: x[1]['cpu_percent'], reverse=True)
             procs_by_mem = sorted(cleaned_processes.items(), key=lambda x: x[1]['memory_percent'], reverse=True)
+            procs_by_cpu = sorted(cleaned_processes.items(), key=lambda x: x[1]['cpu_percent'], reverse=True)
+
+            print(f"Top Proc by count: {procs_by_count[0][0]} with {procs_by_count[0][1]['total_num_procs']} procs")
             print(f"Top Proc by CPU: {procs_by_cpu[0][0]} with {procs_by_cpu[0][1]['cpu_percent']}% cpu usage")
             print(f"Top Proc by Mem: {procs_by_mem[0][0]} with {procs_by_mem[0][1]['memory_percent']}% ram usage")
-            print(f"Num System Procs: {num_active_system_procs}\nNum Clean User Procs: {len(cleaned_processes)}\n")
+            print(f"Num System Procs: {num_active_system_procs}\nNum Clean User Procs: {len(cleaned_processes)}")
             print(f"Total User CPU: {user_cpu_pct}")
 
             if unique_user_proc_names_prev:
@@ -117,7 +96,6 @@ def poll_processes(poll_rate: int=50):
             if previous_top_proc_by_num != procs_by_count[0][0]:
                 previous_top_proc_by_num = procs_by_count[0][0]
                 
-                print(f"top proc replaced: {previous_top_proc_by_num}")
                 osc_client.send_message("/new_top_proc", quantify_string(previous_top_proc_by_num, 1000))
 
             if len(cpu_usage_history) > 0 and tick % 5 == 0:
@@ -129,13 +107,12 @@ def poll_processes(poll_rate: int=50):
             else:
                 cpu_usage_history.append(procs_by_cpu[0][1]['cpu_percent'])
 
-            # osc_client.send_message("/top_cpu_usage", procs_by_cpu[0][1]['cpu_percent'])
-            # osc_client.send_message("/top_mem_usage", procs_by_mem[0][1]['memory_percent'])
             osc_client.send_message("/mem_usage", user_mem_pct)
             osc_client.send_message("/system", [num_active_system_procs, user_cpu_pct])
             
             tick = tick+1 if tick < 100 else 0
             unique_user_proc_names_prev = unique_user_proc_names_current
+            print()
             sleep(poll_rate/1000)
     finally:
         osc_client.send_message("/stop_all", None)

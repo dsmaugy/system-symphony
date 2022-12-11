@@ -1,13 +1,15 @@
 (
-var system_synth, mem_synth, cpu_synth;
+var system_synth, mem_synth, cpu_synth, grain_synth;
 var system_osc_func, cpu_osc_func, new_proc_osc_func, mem_osc_func;
 var all_cont_synths;
 var stop_osc_func;
 
 s.options.memSize = 128000;
 s.waitForBoot({
+	~xp_startup = Buffer.read(s, "windows_xp.wav".resolveRelative);
 
-		SynthDef(\system_synth, { |out, freq=200, amp=0.2, upper_harm=1.5|
+	// synth definitions
+		SynthDef(\system_synth, { |out, freq=200, amp=0, upper_harm=1.5|
 		var num = 8;
 		var spread = rrand(0.4,0.8);
 		var attack = rrand(0.05, 0.3);
@@ -25,7 +27,7 @@ s.waitForBoot({
 		Out.ar(out, snd * amp);
 	}).add;
 
-	SynthDef(\prayer_bell, { |outbus, t_trig = 1, sing_switch = 0, freq = 2434, amp = 0.5, decayscale = 1, lag = 10, i_doneAction = 0|
+	SynthDef(\prayer_bell, { |outbus, t_trig = 1, sing_switch = 0, freq = 2434, amp = 0, decayscale = 1, lag = 10, i_doneAction = 0|
 		var sig, input, first, freqscale, mallet, sing;
 		freqscale = freq / 2434;
 		freqscale = Lag3.kr(freqscale, lag);
@@ -91,7 +93,7 @@ s.waitForBoot({
 		Out.ar(outbus, sig * amp);
 	}).add;
 
-	SynthDef(\drone, { |out, freq=200, reverb_mix=0.5, reverb_room=0.5, amp=0.8|
+	SynthDef(\drone, { |out, freq=200, reverb_mix=0.5, reverb_room=0.5, amp=0|
 		var chord = [1,1.25,1.5];
 		var snd = WhiteNoise.ar();
 		var filt1 = BPF.ar(snd, freq * chord[0],0.05);
@@ -130,49 +132,54 @@ s.waitForBoot({
 
 	}).add;
 
+	SynthDef(\grain_synth, { |out, gate = 1, amp = 1, rate=0.6, pos=0.5, sndbuf|
+		var env, freqdev;
+		// use mouse x to control panning
+		env = EnvGen.kr(
+			Env([0, 1, 0], [1, 1], \sin, 1),
+			gate,
+			levelScale: amp,
+			doneAction: Done.freeSelf);
+		Out.ar(out, GrainBuf.ar(2, Impulse.kr(10), 0.5, sndbuf, rate, LFNoise2.kr(pos).range(0, 1)) * amp);
+	}).add;
 
-});
-)
-
-(
-var system_synth, mem_synth, cpu_synth, r2d2_synth;
-var system_osc_func, cpu_osc_func, new_proc_osc_func, mem_osc_func;
-var all_cont_synths;
-var stop_osc_func;
-
+	// wait for all synthdefs to load
+	s.sync;
+	"SynthDefs added".postln;
+	"\n\nnow playing: the sounds of your system...".postln;
 	// OSCFunc Definitions - here is where the controls happen
 	system_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 	cpu_synth = Synth(\strings, [\amp, 0]);
 	mem_synth = Synth(\drone, [\freq, 800, \amp, 0]);
-r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
-	all_cont_synths = [system_synth, mem_synth, cpu_synth, r2d2_synth];
+	grain_synth = Synth(\grain_synth, [\sndbuf, ~xp_startup, \amp, 0]);
+	all_cont_synths = [system_synth, mem_synth, cpu_synth, grain_synth];
 
 
 	system_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		var system_synth_freq_new = msg[1];
 		var harm_new = msg[2];
 		var system_synth_freq_cur = system_synth.get(\freq);
-		[msg, time, addr, recvPort].postln;
+		// [msg, time, addr, recvPort].postln;
 
-	system_synth.set(\freq, system_synth_freq_new, \amp, 0.1);
-	r2d2_synth.set(\upper_harm, harm_new, \amp, 0.1);
+	system_synth.set(\freq, system_synth_freq_new, \amp, 0.6);
+		grain_synth.set(\rate, msg[2]/20, \pos, msg[1], \amp, 0.3);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
-		cpu_synth.set(\freq, msg[1]*10, \amp, 0.02);  // 700 + ((msg[1]/100)*250)
+		cpu_synth.set(\freq, msg[1]*10, \amp, 0.01);  // 700 + ((msg[1]/100)*250)
 	}, '/top_cpu_usage');
 
 	new_proc_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
 
-		Synth(\prayer_bell, [\freq, msg[1], \amp, 0.1]);
+		Synth(\prayer_bell, [\freq, msg[1], \amp, 0.015]);
 	}, '/new_proc');
 
 	mem_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
-		mem_synth.set(\freq, msg[1]*15, \amp, 0.5);  // 700 + ((msg[1]/100)*250).
-	}, '/top_mem_usage');
+		mem_synth.set(\freq, msg[1]*20, \amp, 0.7);  // 700 + ((msg[1]/100)*250).
+	}, '/mem_usage');
 
 	stop_osc_func = OSCFunc({|msg, time, addr, recvPort|
 	// [msg, time, addr, recvPort].postln;
@@ -180,26 +187,5 @@ r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 			item.set(\amp, 0);
 		});
 	}, '/stop_all');
+});
 )
-
-
-
-// b = Synth(\prayer_bell, [\freq, 1000, \amp, 0.02, \sing_switch, 0.9, \t_trig, 1])
-
-// a = Synth(\system_synth, [freq: 179])
-// a.set(\upper_harm, 3.2, \freq, 140)
-// a = Synth(\drone, [\freq, 800, \amp, 0]);
-
-
-
-
-/*
-(
-{
-	x = RLPF.ar(SinOsc.ar(SinOsc.ar([0.020, 0.019]).range(3, 10)) * SyncSaw.ar(SinOsc.ar(0.01).range(1, 100), SinOsc.ar(0.017).range(300, 1000)), Line.ar(60, 10000, 60*5));
-	x = GVerb.ar(x + CombL.ar(x, 10, 0.2, 10));
-
-	// EnvGen.ar(1, doneAction:2) * x * 0.03!2
-	Pan2.ar(x * 0.04);
-}.play
-)*/
