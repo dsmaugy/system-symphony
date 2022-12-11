@@ -1,12 +1,14 @@
 (
-var system_synth, mem_synth, cpu_synth, r2d2_synth;
+var system_synth, mem_synth, cpu_synth, grain_synth;
 var system_osc_func, cpu_osc_func, new_proc_osc_func, mem_osc_func;
 var all_cont_synths;
 var stop_osc_func;
 
 s.options.memSize = 128000;
 s.waitForBoot({
+	~xp_startup = Buffer.read(s, "windows_xp.wav".resolveRelative);
 
+	// synth definitions
 		SynthDef(\system_synth, { |out, freq=200, amp=0, upper_harm=1.5|
 		var num = 8;
 		var spread = rrand(0.4,0.8);
@@ -130,15 +132,26 @@ s.waitForBoot({
 
 	}).add;
 
+	SynthDef(\grain_synth, { |out, gate = 1, amp = 1, rate=0.6, pos=0.5, sndbuf|
+		var env, freqdev;
+		// use mouse x to control panning
+		env = EnvGen.kr(
+			Env([0, 1, 0], [1, 1], \sin, 1),
+			gate,
+			levelScale: amp,
+			doneAction: Done.freeSelf);
+		Out.ar(out, GrainBuf.ar(2, Impulse.kr(10), 0.5, sndbuf, rate, LFNoise2.kr(pos).range(0, 1)) * amp);
+	}).add;
+
 	// wait for all synthdefs to load
 	s.sync;
-
+	"SynthDefs added".postln;
 	// OSCFunc Definitions - here is where the controls happen
 	system_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 	cpu_synth = Synth(\strings, [\amp, 0]);
 	mem_synth = Synth(\drone, [\freq, 800, \amp, 0]);
-r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
-	all_cont_synths = [system_synth, mem_synth, cpu_synth, r2d2_synth];
+	grain_synth = Synth(\grain_synth, [\sndbuf, ~xp_startup, \amp, 0]);
+	all_cont_synths = [system_synth, mem_synth, cpu_synth, grain_synth];
 
 
 	system_osc_func = OSCFunc({ |msg, time, addr, recvPort|
@@ -148,7 +161,7 @@ r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 		[msg, time, addr, recvPort].postln;
 
 	system_synth.set(\freq, system_synth_freq_new, \amp, 0.1);
-	r2d2_synth.set(\upper_harm, harm_new, \amp, 0.1);
+		grain_synth.set(\rate, msg[2], \pos, msg[1], \amp, 0.15);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
@@ -176,6 +189,24 @@ r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 });
 )
 
+
+/*(
+SynthDef(\grain_synth, { |out, gate = 1, amp = 1, rate=0.6, pos=0.5, sndbuf|
+    var env, freqdev;
+    // use mouse x to control panning
+    env = EnvGen.kr(
+        Env([0, 1, 0], [1, 1], \sin, 1),
+        gate,
+        levelScale: amp,
+        doneAction: Done.freeSelf);
+    Out.ar(out, GrainBuf.ar(2, Impulse.kr(10), 0.5, sndbuf, rate, LFNoise2.kr(pos).range(0, 1)) * amp);
+}).add;
+)
+
+x = Synth(\buf_grain_test, [\amp, 0.1, \sndbuf, ~xp_startup, \rate, 14, 0.8]);
+x.set(\amp, 0.3, \rate, 0, \pos, 0.2)*/
+
+
 // (
 // var system_synth, mem_synth, cpu_synth, r2d2_synth;
 // var system_osc_func, cpu_osc_func, new_proc_osc_func, mem_osc_func;
@@ -183,6 +214,45 @@ r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
 // var stop_osc_func;
 //
 //
+// system_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
+// cpu_synth = Synth(\strings, [\amp, 0]);
+// mem_synth = Synth(\drone, [\freq, 800, \amp, 0]);
+// r2d2_synth = Synth(\system_synth, [\freq, 100, \amp, 0]);
+// all_cont_synths = [system_synth, mem_synth, cpu_synth, r2d2_synth];
+//
+//
+// system_osc_func = OSCFunc({ |msg, time, addr, recvPort|
+// 	var system_synth_freq_new = msg[1];
+// 	var harm_new = msg[2];
+// 	var system_synth_freq_cur = system_synth.get(\freq);
+// 	[msg, time, addr, recvPort].postln;
+//
+// 	system_synth.set(\freq, system_synth_freq_new, \amp, 0.1);
+// 	r2d2_synth.set(\freq, 10, \upper_harm, harm_new, \amp, 0.01);
+// }, '/system');
+//
+// cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
+// 	// [msg, time, addr, recvPort].postln;
+// 	cpu_synth.set(\freq, msg[1]*10, \amp, 0.02);  // 700 + ((msg[1]/100)*250)
+// }, '/top_cpu_usage');
+//
+// new_proc_osc_func = OSCFunc({ |msg, time, addr, recvPort|
+// 	// [msg, time, addr, recvPort].postln;
+//
+// 	Synth(\prayer_bell, [\freq, msg[1], \amp, 0.1]);
+// }, '/new_proc');
+//
+// mem_osc_func = OSCFunc({ |msg, time, addr, recvPort|
+// 	// [msg, time, addr, recvPort].postln;
+// 	mem_synth.set(\freq, msg[1]*15, \amp, 0.5);  // 700 + ((msg[1]/100)*250).
+// }, '/top_mem_usage');
+//
+// stop_osc_func = OSCFunc({|msg, time, addr, recvPort|
+// 	// [msg, time, addr, recvPort].postln;
+// 	all_cont_synths.do({|item, i|
+// 		item.set(\amp, 0);
+// 	});
+// }, '/stop_all');
 // )
 
 

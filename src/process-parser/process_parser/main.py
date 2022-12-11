@@ -32,7 +32,7 @@ discrete vars:
 
 
 
-osc_client = udp_client.SimpleUDPClient("172.28.208.1", 57120)
+osc_client = udp_client.SimpleUDPClient("127.0.0.1", 57120)
 
 def user_process(p_info: Dict) -> bool:
     return p_info["username"] not in PROCESS_IGNORE_LIST and p_info["pid"] != CURRENT_PID
@@ -45,8 +45,7 @@ def quantify_string(s: str, thresh: int) -> int:
 
 def init_sc():
     with importlib.resources.path("process_parser.supercollider", "process_synths.scd") as sc_file:
-        subprocess.run(["sclang", sc_file])
-
+        subprocess.Popen(["sclang", sc_file])
 
 def poll_processes(poll_rate: int=50):
     tick = 0
@@ -56,7 +55,7 @@ def poll_processes(poll_rate: int=50):
 
     try:
         while True:
-            processes = list(psutil.process_iter())
+            processes = list(psutil.process_iter(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "username", "pid", "name"]))
             print(f"len: {len(processes)}")
             num_active_system_procs = 0
             num_active_user_procs = 0
@@ -68,7 +67,7 @@ def poll_processes(poll_rate: int=50):
             unique_user_proc_names_current = set()
             for p in processes:
                 try:
-                    p_info = p.as_dict(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "num_fds", "username", "pid", "name"])
+                    p_info = p.as_dict(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "username", "pid", "name"])
                     if p_info['cpu_times'] is None:
                         raise AttributeError
                 except psutil.NoSuchProcess as e:
@@ -85,12 +84,6 @@ def poll_processes(poll_rate: int=50):
                         cleaned_processes[p_info['name']]['cpu_times']['kernel'] += p_info['cpu_times'][1]
                         cleaned_processes[p_info['name']]['memory_percent'] += p_info['memory_percent']
                         cleaned_processes[p_info['name']]['nice'] = max(p_info['nice'], cleaned_processes[p_info['name']]['nice'])
-                        # if p_info['num_fds']:
-                        #     if cleaned_processes[p_info['name']]['num_fds']: 
-                        #         cleaned_processes[p_info['name']]['num_fds'] += p_info['num_fds']
-                        #     else:
-                        #         cleaned_processes[p_info['name']]['num_fds'] = p_info['num_fds']
-
                         cleaned_processes[p_info['name']]['num_threads'] += p_info['num_threads']
                         cleaned_processes[p_info['name']]['total_num_procs'] += 1
                         user_mem_pct += p_info['memory_percent']
@@ -152,11 +145,11 @@ def poll_processes(poll_rate: int=50):
 
 @click.command()
 @click.option("--poll-rate", default=50, help="How fast to poll processes in ms")
-@click.option("--start-sc", is_flag=True, show_default=True, default=True, help="Starts the supercollider script for you.")
-def main(poll_rate, start_sc):
+@click.option("--no-sc", is_flag=True, show_default=True, help="Starts the supercollider script for you.")
+def main(poll_rate, no_sc):
     """Explore the sonic world of your computer. Associated supercollider file must be running."""
 
-    if start_sc:
+    if not no_sc:
         init_sc()
 
     poll_processes(poll_rate=poll_rate)
