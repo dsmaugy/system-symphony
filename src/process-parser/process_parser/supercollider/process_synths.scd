@@ -178,7 +178,7 @@ s.waitForBoot({
 	mem_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
 		mem_synth.set(\freq, msg[1]*15, \amp, 0.5);  // 700 + ((msg[1]/100)*250).
-	}, '/top_mem_usage');
+	}, '/mem_usage');
 
 	stop_osc_func = OSCFunc({|msg, time, addr, recvPort|
 	// [msg, time, addr, recvPort].postln;

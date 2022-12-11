@@ -134,7 +134,8 @@ def poll_processes(poll_rate: int=50):
                 cpu_usage_history.append(procs_by_cpu[0][1]['cpu_percent'])
 
             # osc_client.send_message("/top_cpu_usage", procs_by_cpu[0][1]['cpu_percent'])
-            osc_client.send_message("/top_mem_usage", procs_by_mem[0][1]['memory_percent'])
+            # osc_client.send_message("/top_mem_usage", procs_by_mem[0][1]['memory_percent'])
+            osc_client.send_message("/mem_usage", user_mem_pct)
             osc_client.send_message("/system", [num_active_system_procs, user_cpu_pct])
             
             tick = tick+1 if tick < 100 else 0
