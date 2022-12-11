@@ -145,7 +145,7 @@ def poll_processes(poll_rate: int=50):
 
 @click.command()
 @click.option("--poll-rate", default=50, help="How fast to poll processes in ms")
-@click.option("--no-sc", is_flag=True, show_default=True, help="Starts the supercollider script for you.")
+@click.option("--no-sc", is_flag=True, show_default=True, help="Do not launch the supercollider process.")
 def main(poll_rate, no_sc):
     """Explore the sonic world of your computer. Associated supercollider file must be running."""
 
