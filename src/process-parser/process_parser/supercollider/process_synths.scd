@@ -160,19 +160,19 @@ s.waitForBoot({
 		var system_synth_freq_cur = system_synth.get(\freq);
 		[msg, time, addr, recvPort].postln;
 
-	system_synth.set(\freq, system_synth_freq_new, \amp, 0.1);
-		grain_synth.set(\rate, msg[2], \pos, msg[1], \amp, 0.15);
+	system_synth.set(\freq, system_synth_freq_new, \amp, 0.5);
+		grain_synth.set(\rate, msg[2]*10, \pos, msg[1], \amp, 0.2);
 	}, '/system');
 
 	cpu_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
-		cpu_synth.set(\freq, msg[1]*10, \amp, 0.02);  // 700 + ((msg[1]/100)*250)
+		cpu_synth.set(\freq, msg[1]*10, \amp, 0.01);  // 700 + ((msg[1]/100)*250)
 	}, '/top_cpu_usage');
 
 	new_proc_osc_func = OSCFunc({ |msg, time, addr, recvPort|
 		// [msg, time, addr, recvPort].postln;
 
-		Synth(\prayer_bell, [\freq, msg[1], \amp, 0.1]);
+		Synth(\prayer_bell, [\freq, msg[1], \amp, 0.01]);
 	}, '/new_proc');
 
 	mem_osc_func = OSCFunc({ |msg, time, addr, recvPort|
