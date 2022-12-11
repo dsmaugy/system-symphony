@@ -55,7 +55,7 @@ def poll_processes(poll_rate: int=50):
 
     try:
         while True:
-            processes = list(psutil.process_iter(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "username", "pid", "name"]))
+            processes = list(psutil.process_iter(attrs=["cpu_percent", "cpu_times", "memory_percent", "username", "pid", "name"]))
             print(f"len: {len(processes)}")
             num_active_system_procs = 0
             num_active_user_procs = 0
@@ -67,7 +67,7 @@ def poll_processes(poll_rate: int=50):
             unique_user_proc_names_current = set()
             for p in processes:
                 try:
-                    p_info = p.as_dict(attrs=["cpu_percent", "cpu_times", "memory_percent", "nice", "num_threads", "username", "pid", "name"])
+                    p_info = p.as_dict(attrs=["cpu_percent", "cpu_times", "memory_percent", "username", "pid", "name"])
                     if p_info['cpu_times'] is None:
                         raise AttributeError
                 except psutil.NoSuchProcess as e:
@@ -83,8 +83,6 @@ def poll_processes(poll_rate: int=50):
                         cleaned_processes[p_info['name']]['cpu_times']['user'] += p_info['cpu_times'][0]
                         cleaned_processes[p_info['name']]['cpu_times']['kernel'] += p_info['cpu_times'][1]
                         cleaned_processes[p_info['name']]['memory_percent'] += p_info['memory_percent']
-                        cleaned_processes[p_info['name']]['nice'] = max(p_info['nice'], cleaned_processes[p_info['name']]['nice'])
-                        cleaned_processes[p_info['name']]['num_threads'] += p_info['num_threads']
                         cleaned_processes[p_info['name']]['total_num_procs'] += 1
                         user_mem_pct += p_info['memory_percent']
                         user_cpu_pct += p_info['cpu_percent']
@@ -93,9 +91,7 @@ def poll_processes(poll_rate: int=50):
                         
                         cleaned_processes[p_info['name']] = {'cpu_percent': p_info['cpu_percent'], 
                                                             'cpu_times': {'user': p_info['cpu_times'][0], 'kernel': p_info['cpu_times'][1]}, 
-                                                            'memory_percent': p_info['memory_percent'], 'nice': p_info['nice'], 
-                                                            'num_threads': p_info['num_threads'], 
-                                                            'total_num_procs': 0}
+                                                            'memory_percent': p_info['memory_percent'], 'total_num_procs': 0}
                         unique_user_proc_names_current.add(p_info['name'])
 
                     num_active_user_procs += 1       
