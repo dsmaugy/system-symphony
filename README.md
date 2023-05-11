@@ -4,6 +4,9 @@ Explore the sonic world of your computer.
 
 `system-syphony` sonifies your computer by transforming its running processes into synthesized sounds.  
 
+## Demo
+[System Symphony - All Movements](https://www.youtube.com/watch?v=7eFRx9gCreM)
+
 ## Installation
 ### Preqrequisites
 1. Install [Supercollider](https://supercollider.github.io/downloads) on your current platform.
